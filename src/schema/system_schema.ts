@@ -48,13 +48,18 @@ export const systemDB = {
             schema.event = new mongoose.Schema( {
                 name: String,
                 date: Date,
-                attendance_types: [{
-                    "name": String,
-                    active: Boolean
-                }],
-                active: Boolean,
-                active_event_type_id: String
+                status: Boolean
             })
+
+            schema.judges = new mongoose.Schema({
+                name: String,
+                access_code: String,
+                events: [
+                    {
+                        event_id: { type: mongoose.Schema.Types.ObjectId, ref: 'events' }
+                    }
+                ]
+            });
 
             schema.attendance = new mongoose.Schema( {
                 event_id:  { type: mongoose.Schema.Types.ObjectId, ref: 'events' },
@@ -65,15 +70,62 @@ export const systemDB = {
                         date_time: Date
                     }
                 ]
+            });
+
+            schema.candidates = new mongoose.Schema({
+                name: String,
+                event_id: { type: mongoose.Schema.Types.ObjectId, ref: 'events' },
+            })
+
+            schema.rounds = new mongoose.Schema( {
+                name: String,
+                event_id: { type: mongoose.Schema.Types.ObjectId, ref: 'events' },
+                candidates: [
+                    {
+                        candidate_id: { type: mongoose.Schema.Types.ObjectId, ref: 'candidates' },
+                        deductions:[
+                            {
+                                name: String,
+                                value: Number,
+                                category_id:  { type: mongoose.Schema.Types.ObjectId, ref: 'categories' }
+                            }
+                        ]
+                    }
+                ]
+            })
+
+            schema.categories = new mongoose.Schema( {
+                event_id: { type: mongoose.Schema.Types.ObjectId, ref: 'events' },
+                round_id: { type: mongoose.Schema.Types.ObjectId, ref: 'rounds' },
+                name: String,
+                criteria: [
+                    {
+                        name: String,
+                        percentage: Number
+                    }
+                ]
+            })
+
+            schema.ratings = new mongoose.Schema( {
+                event_id: { type: mongoose.Schema.Types.ObjectId, ref: 'events' },
+                round_id: { type: mongoose.Schema.Types.ObjectId, ref: 'events' },
+                category_id: { type: mongoose.Schema.Types.ObjectId, ref: 'rounds' },
+                candidate_id: { type: mongoose.Schema.Types.ObjectId, ref: 'candidates' },
+                judge_id: { type: mongoose.Schema.Types.ObjectId, ref: 'judges' },
+                rating: [{
+                    criteria_id: { type: mongoose.Schema.Types.ObjectId},
+                    score: Number
+                }]
             })
 
             return {models:{
-                registration: local_connection.model('registrations', schema.registration),
-                organization: local_connection.model('organizations', schema.organizations),
-                participation_type: local_connection.model('participation_types', schema.organizations),
+                
                 events: local_connection.model('events', schema.event),
-                otp_model: local_connection.model('otps', schema.authOtp),
-                attendance: local_connection.model('attendances', schema.attendance)
+                judges: local_connection.model('judges', schema.judges),
+                candidates: local_connection.model('candidates', schema.candidates),
+                rounds: local_connection.model('rounds', schema.rounds),
+                categories: local_connection.model('categories', schema.categories),
+                ratings: local_connection.model('ratings', schema.ratings),
             }};
         } catch (error) {
             console.log("AN ERROR OCCURED IN MONGO", error)
